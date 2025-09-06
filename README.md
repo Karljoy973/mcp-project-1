@@ -1,69 +1,49 @@
-# React + TypeScript + Vite
+# React + Ollama JS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ce projet vise à construire une **application MCP fullstack** composée de trois éléments : un **Host**, un **Client** et un **Server**. L’objectif est de proposer une architecture complète permettant d’interagir avec des modèles d’IA via une interface utilisateur moderne et un protocole standardisé.
 
-Currently, two official plugins are available:
+## 🚀 Architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* **Host (Front-end)** : interface en React.
+* **Client** : implémentation du protocole MCP avec le SDK `@modelcontextprotocol`.
+* **Server (Back-end)** : traitement et exposition de données (ex. météo), avec une vue adaptée à l’architecture MCP.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🖥️ Host
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Le **Host** est développé avec **React**.
+Actuellement, il s’agit d’une page unique offrant :
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+* 📑 Un menu déroulant listant les modèles d’IA disponibles sur le serveur.
+* 💬 Un champ de saisie pour les requêtes de l’utilisateur.
+* 🪞 Un espace de discussion affichant l’échange entre l’utilisateur et le modèle sélectionné.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔗 Client
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Le **Client** est un client MCP construit avec le SDK [`@modelcontextprotocol`](https://www.npmjs.com/package/@modelcontextprotocol).
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+* Transport actuel : **STDIO**.
+* Évolution prévue : passage à une **requête HTTP streamable** pour plus de flexibilité et de performance.
+
+---
+
+## ⚙️ Server
+
+Le **Server** aura pour rôle de :
+
+* Traiter des données (par exemple : données météorologiques).
+* Proposer une vue structurée de ces données.
+* S’intégrer dans l’architecture MCP pour assurer une communication fluide avec le client et le host.
+
+---
+
+## 📌 Objectifs à court terme
+
+* [ ] Finaliser la première version du Host React.
+* [ ] Mettre en place la couche de transport HTTP côté Client.
+* [ ] Prototyper un Server simple avec données météo.
+
+
