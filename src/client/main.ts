@@ -1,65 +1,106 @@
 // create a classs that is supposed to allow client side messaging
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { Client } from "@modelcontextprotocol/sdk/client";
-import ollama, { type Tool } from "ollama";
-import dotenv from "dotenv";
-import { z } from "zod";
-import type { TODO } from "@/types";
+import type {  Tool } from "ollama/browser";
+import ollama from "ollama/browser"
+import type { Message } from "ollama";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { URL } from "url";
 
-dotenv.config();
+
 export class MCPClient {
   private mcp: Client;
-  private transport: StdioClientTransport | null = null;
+  private transport: |StreamableHTTPClientTransport |null = null;
   private tools: Tool[] = [];
-  private provider: Provider;
-  constructor(specs: { name: string; logLevel?: TODO; logger?: TODO }) {
-    this.provider = new Provider(specs);
+  public provider: typeof ollama;
+  public data: string
+  constructor(specs: {
+    name: string;
+
+  }) {
+    this.provider = ollama
     this.mcp = new Client({ name: specs.name, version: "1.0.0" });
+    this.data = ""
+
   }
-  setupHandlers() {
-    this.mcp.onerror = (error) => console.error(error);
-    this.mcp.onclose = () =>
-      console.error(`server closed at date: ${Date.now().toLocaleString()}`);
-  }
+  
   async connectToServer(serverScriptPath: string) {
-    //j'imagine qu il faudrait que je puisse fetch les server path dont j ai besoin
-    //puis que je cree une connexion par chemin
-    //j imagine que je peux implementer ca plus tard
+
     try {
-      if (!serverScriptPath.endsWith(".js")) {
-        console.error("Invalid Server Path, Server will close now.");
-        return;
-      }
+      
       const command = process.execPath;
-      this.transport = new StdioClientTransport({
-        command,
-        args: [serverScriptPath],
-      });
+      const url = new URL("http://localhost:11434/")
+      this.transport = new StreamableHTTPClientTransport(url, {}) //TODO improve
       this.mcp.connect(this.transport);
+      const toolsResult = await this.mcp.listTools();
+      this.tools = toolsResult.tools.map(tool => {
+        return {
+          type: "function", 
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters:tool.inputSchema.properties,   
+          }
+         
+        }
+      })
+      //TODO je pense que j aurai un soucis de mapping
+      /**!SECTION
+       * function: {
+        name?: string | undefined;
+        description?: string | undefined;
+        type?: string | undefined;
+        parameters?: {
+            type?: string | undefined;
+            $defs?: any;
+            items?: any;
+            required?: string[] | undefined;
+            properties?: {
+                [key: string]: {
+                    type?: string | string[] | undefined;
+                    items?: any;
+                    description?: string | undefined;
+                    enum?: any[] | undefined;
+                };
+            } | undefined;
+        } | undefined;
+    };
+       */
+       console.log(
+            "Connected to server with tools:",
+            this.tools.map(tool => tool.function.name)
+          );
     } catch (e) {
-      //should check which error forces to close the server
+      console.error(e)
       this.mcp.close();
     }
   }
-  async processQuery(query: string) {}
-  async chatLoop() {}
+  async processQuery(query: {
+    inputMessage: string, 
+    model: string
+  }) {
+    const messages: Message[] = [{ role: "user", content: query.inputMessage }]
+    const response = await this.provider.chat({model:query.model, messages:messages, tools:this.tools})
+   this.data = response.message.content;
+    
+  }
+  
   async cleanup() {
     this.mcp.close();
   }
 }
 
-//je me demande si ollama ne fait pas deja le job de ma classe provider
-//je me demande si si je ne devrais pas utiliser un decorateur ici
-export class Provider {
-  logLevel: TODO; // error warn info
-  logger: TODO;
-  ollama: typeof ollama;
 
-  constructor(specs: { logLevel?: TODO; logger?: TODO }) {
-    //endpoint headers fetch use zod to validate data
-    //https://www.npmjs.com/package/debug
-    if (!!specs && !!specs.logLevel) this.logLevel = specs.logLevel;
-    if (!!specs && !!specs.logger) this.logger = specs.logger;
-    this.ollama = ollama;
-  }
-}
+/**!SECTION
+const response = await this.provider.createMessages({
+  model:
+}) //je post 
+ * const messages: MessageParam[] = [{role: "user",content: query},];
+ * const response = await this.anthropic.messages.create({model: "claude-3-5-sonnet-20241022",max_tokens: 1000,messages,tools: this.tools});
+ * ligne 1 : on cree le message a partir de la requete de lutilisateur, 
+ * ligne 2 on post le message, 
+ * tu recois la reponse, tu distingue si tu recois un outil ou de la donne 
+ * si tu as un outil, tu recuperes l outils et les args, tu appelles l outil avec les args 
+ * tu recupere le resultat des outils 
+ * 
+ */
+
